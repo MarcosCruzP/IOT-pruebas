@@ -1,4 +1,14 @@
 version: "3.8"
+
+volumes:
+  vol-emqx-data:
+    name: foo-emqx-data
+  vol-emqx-etc:
+    name: foo-emqx-etc
+  vol-emqx-log:
+    name: foo-emqx-log
+
+
 services:
 
   emqx:
@@ -6,8 +16,21 @@ services:
     image: emqx:5.0.26
     restart: always
     ports:
-      - ${emqxdashport}:18083
+      - 18083:18083
       - 8083:8083
+
+    volumes:
+      - vol-emqx-data:/opt/emqx/data
+      - vol-emqx-etc:/opt/emqx/etc
+      - vol-emqx-log:/opt/emqx/log
+
     environment:
+      EMQX_NAME: iotmarcos-dv
+      EMQX_HOST: 172.19.0.2
+
+      TZ: "America/Mexico_City"
+
+      EMQX_DASHBOARD__DEFAULT_USER__PASSWORD: "developmark"      
       EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS: 1000
 
+ 
