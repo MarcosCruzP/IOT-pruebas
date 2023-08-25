@@ -11,18 +11,38 @@ volumes:
 
 services:
 
+  mongo:
+    container_name: mongo 
+    image: mongo:7.0.0
+    restart: always
+    environment:
+     TZ: "America/Mexico_City"
+     MONGO_INITDB_ROOT_USERNAME: "iotdevuser"
+     MONGO_INITDB_ROOT_PASSWORD: "iotdevpassword"
+    volumes:
+     - ./mongodata:/data/db
+    ports:
+     - 27017:27017
+
   emqx:
     container_name: emqx
-    image: emqx:5.0.26
+    image: emqx:4.4.19
+    # image: emqx:4.4.19
     restart: always
     ports:
       - 18083:18083
+      - 1883:1883
+      - 8883:8883
       - 8083:8083
+      - 8085:8081
 
     volumes:
       - vol-emqx-data:/opt/emqx/data
       - vol-emqx-etc:/opt/emqx/etc
       - vol-emqx-log:/opt/emqx/log
+
+    links:
+      - mongo
 
     environment:
       EMQX_NAME: iotmarcos-dv
@@ -31,6 +51,40 @@ services:
       TZ: "America/Mexico_City"
 
       EMQX_DASHBOARD__DEFAULT_USER__PASSWORD: "developmark"      
+
+      EMQX_ALLOW_ANONYMOUS: "false"
+      EMQX_NOMATCH: "deny"
+
+      # MONGO CONNECTION
+      EMQX_AUTH__MONGO__TYPE: single
+      EMQX_AUTH__MONGO__SERVER: "mongo:27017"
+      EMQX_AUTH__MONGO__POOL: 8
+
+      EMQX_AUTH__MONGO__LOGIN: "iotdevuser"
+      EMQX_AUTH__MONGO__PASSWORD: "iotdevpassword"
+      EMQX_AUTH__MONGO__AUTH_SOURCE: admin
+
+      EMQX_AUTH__MONGO__DATABASE: "IOTDEV"
+      EMQX_AUTH__MONGO__AUTH_QUERY__COLLECTION: "emqxauthrules"
+
+      EMQX_AUTH__MONGO__SUPER_QUERY__COLLECTION: "emqxauthrules"
+      EMQX_AUTH__MONGO__SUPER_QUERY__SUPER_FIELD: "is_superuser"
+      EMQX_AUTH__MONGO__SUPER_QUERY__SELECTOR: "username=%u"
+      EMQX_AUTH__MONGO__SUPER_QUERY: "off"
+
+      EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_HASH: plain
+      EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_FIELD: "password"
+      EMQX_AUTH__MONGO__AUTH_QUERY__SELECTOR: "username=%u"
+
+      ## Enable ACL query.
+      #Access control list
+      EMQX_AUTH__MONGO__ACL_QUERY: "on"
+      EMQX_AUTH__MONGO__ACL_QUERY__COLLECTION: "emqxauthrules"
+      EMQX_AUTH__MONGO__ACL_QUERY__SELECTOR: "username=%u"
+
+      EMQX_LOADED_PLUGINS: "emqx_recon,emqx_retainer,emqx_management,emqx_dashboard,emqx_auth_mongo"
+
+
       EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS: 1000
 
  
